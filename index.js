@@ -6,33 +6,43 @@ const dbname='conFusion';
 
 const dboper= require('./operations');
 
-MongoClient.connect(url, (err,client) =>{
-    assert.equal(err,null);
-    console.log('Connected correctly!!');
-
-    const db=client.db(dbname);
-    
-    dboper.insertDocument(db,{name:'vadonut',description:'test'},'dishes',(result)=>{
-        console.log('Insert document:\n',result.ops);
+MongoClient.connect(url).then((client) =>{
         
-        dboper.findDocuments(db,'dishes',(docs)=> {
-            console.log("Found Document:\n ",docs);
+        console.log('Connected correctly!!');
 
-            dboper.updateDocument(db,{name:'vadonut'},{description:'Update Test'},'dishes',(result)=>{
+        const db=client.db(dbname);
+    
+    dboper.insertDocument(db,{name:'vadonut',description:'test'},'dishes')
+    
+    .then((result)=>{
+        console.log('Insert document:\n',result.ops);        
+        return dboper.findDocuments(db,'dishes')
+    })
 
-                console.log('Updated document:\n',result.result);
 
+    .then((docs)=> {
+        console.log("Found Document:\n ",docs);
+        return dboper.updateDocument(db,{name:'vadonut'},{description:'Update Test'},'dishes')
+    })
+    
 
-                dboper.findDocuments(db,'dishes',(docs)=>{
-                    console.log('found documents:\n',docs);
+    .then((result)=>{
+
+        console.log('Updated document:\n',result.result);
+        return dboper.findDocuments(db,'dishes')
+    })
+
+    .then((docs)=>{
+        console.log('found documents:\n',docs);
                     
-                    db.dropCollection('dishes',(result)=>{
-                        console.log('Dropped collection',result);
+        return db.dropCollection('dishes')
+    })
 
-                        client.close();
-                    });
-                });
-            });
-        });
-    });
-});
+    .then((result)=>{
+        console.log('Dropped collection',result);
+
+        client.close();
+    })
+    .catch((err)=>console.log(err));
+})
+.catch((err)=> console.log(err));
